@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 import uuid as uuidlib
 
@@ -9,3 +10,10 @@ def jsonify(obj, *args, **kwargs):
 
 def uuid():
     return str(uuidlib.uuid4())
+
+def date_to_timestamp(date):
+    d = datetime.strptime(date, '%Y-%m-%dT%H:%M:%S')
+    return d.strftime('%s')
+
+def timestamp_to_date(timestamp):
+    return datetime.fromtimestamp(int(timestamp))
