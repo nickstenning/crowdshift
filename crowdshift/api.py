@@ -4,7 +4,7 @@ import uuid
 from flask import Blueprint, Response
 from flask import request
 
-from . import redis
+from . import rc
 
 def _uuid():
     return str(uuid.uuid4())
@@ -22,8 +22,8 @@ def root():
 @api.route('/key', methods=['POST'])
 def create_key():
     u = _uuid()
-    if redis.set('key:%s' % u, 'OK'):
-        return jsonify({ 'key': u })
+    if rc.set('key:%s' % u, 'OK'):
+        return jsonify({'key': u})
     else:
-        return jsonify({ 'message': 'Failed to create API key!' }, status_code=500)
+        return jsonify({'message': 'Failed to create API key!'}, status_code=500)
 
