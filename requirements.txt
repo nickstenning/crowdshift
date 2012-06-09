@@ -1,4 +1,3 @@
 Flask==0.8
 flask-heroku==0.1.3
 redis==2.4.13
-git+https://github.com/satori/flask-redis.git#egg=Flask-Redis
