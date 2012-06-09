@@ -3,7 +3,7 @@ from urlparse import urlparse
 
 import redis
 
-from flask import Flask
+from flask import Flask, g, request
 
 # redis connection
 rc = None
@@ -18,6 +18,14 @@ def create_app():
 
     from . import api
     app.register_blueprint(api.api)
+
+    @app.before_request
+    def before_request():
+        auth = request.headers.get('Authorization')
+        if auth is not None:
+            g.auth = [x.strip() for x in auth.split(" ", 1)]
+        else:
+            g.auth = None
 
     return app
 

@@ -1,19 +1,10 @@
-import json
-import uuid
-
-from flask import Blueprint, Response
-from flask import request
+from flask import Blueprint, g
 
 from . import rc
-
-def _uuid():
-    return str(uuid.uuid4())
+from .auth import require_key
+from .util import jsonify, uuid
 
 api = Blueprint('api', __name__)
-
-def jsonify(obj, *args, **kwargs):
-    res = json.dumps(obj, indent=None if request.is_xhr else 2)
-    return Response(res, mimetype='application/json', *args, **kwargs)
 
 @api.route('/')
 def root():
@@ -21,9 +12,16 @@ def root():
 
 @api.route('/key', methods=['POST'])
 def create_key():
-    u = _uuid()
-    if rc.set('key:%s' % u, 'OK'):
-        return jsonify({'key': u})
-    else:
-        return jsonify({'message': 'Failed to create API key!'}, status_code=500)
+    u = uuid()
 
+    assert rc.setnx('key:%s' % u, 'OK')
+    return jsonify({'key': u})
+
+@api.route('/event', methods=['POST'])
+@require_key
+def create_event():
+    _, key = g.auth
+    u = uuid()
+
+    assert rc.setnx('event:%s:owner' % u, key)
+    return jsonify({'id': u})
