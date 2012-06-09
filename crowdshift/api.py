@@ -1,4 +1,5 @@
 import datetime
+
 from flask import Blueprint, g, request
 
 from . import rc
@@ -87,3 +88,44 @@ def get_commitment(eid, cid):
     })
 
 
+@api.route('/event/<eid>/attendance')
+def get_attendance(eid):
+    try:
+        start = utc8601_to_date(request.args['start'])
+    except (KeyError, ValueError):
+        start = datetime.utcnow()
+
+    try:
+        end = utc8601_to_date(request.args['end'])
+    except (KeyError, ValueError):
+        end = datetime.utcnow() + datetime.timedelta(days=1)
+
+    try:
+        resolution = int(request.args['resolution'])
+    except (KeyError, ValueError):
+        resolution = 3600
+
+    start_ts = start.strftime('%s')
+    end_ts = end.strftime('%s')
+
+    attendance = [[x, 0] for x in xrange(int(start_ts), int(end_ts), resolution)]
+
+    # find all commitments starting in range [start_ts, end_ts)
+    for cid, cstart in rc.zrangebyscore('event:%s:commitments' % eid, start_ts, '(%s' % end_ts, withscores=True):
+        # we have cstart, but we need to get cend
+        cend = rc.get('commitment:%s:end' % cid)
+
+        # walk through attendance, and for each attendance entry within time range,
+        # increment attendance numbers
+        for entry in attendance:
+            if int(cstart) <= entry[0] < int(cend):
+                entry[1] += 1
+
+    attendance = [[timestamp_to_date(x[0]).isoformat(), x[1]] for x in attendance]
+
+    return jsonify({
+        'start': start.isoformat(),
+        'end': end.isoformat(),
+        'resolution': resolution,
+        'attendance': attendance
+    })
