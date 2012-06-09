@@ -60,11 +60,10 @@ def create_commitment(eid):
     tok = uuid()
     cid = uuid()
 
-    rc.setex('token:%s', 86400, tok)
+    rc.setex('token:%s' % tok, 86400, cid)
     rc.zadd('event:%s:commitments' % eid, start_ts, cid)
     rc.set('commitment:%s:start' % cid, start_ts)
     rc.set('commitment:%s:end'   % cid, end_ts)
-    rc.set('commitment:%s:token' % cid, tok)
 
     return jsonify({
         "id": cid,
