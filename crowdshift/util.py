@@ -16,4 +16,4 @@ def utc8601_to_date(date_str):
     return datetime.strptime(date_str, '%Y-%m-%dT%H:%M:%S')
 
 def timestamp_to_date(timestamp_str):
-    return datetime.utcfromtimestamp(int(timestamp_str))
+    return datetime.fromtimestamp(int(timestamp_str))
