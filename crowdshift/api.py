@@ -35,21 +35,19 @@ def create_commitment(eid):
     if rc.get('event:%s:owner' % eid) != key:
         return jsonify({'message': "This ain't your event, buster!"}, status=401)
 
-    if 'start' not in request.args:
+    try:
+        start = utc8601_to_date(request.form['start'])
+    except KeyError:
         start = datetime.datetime.utcnow()
-    else:
-        try:
-            start = utc8601_to_date(request.args['start'])
-        except ValueError:
-            return jsonify({'message': "'%s' is an invalid start time!" % request.args['start']}, status=400)
+    except ValueError:
+        return jsonify({'message': "'%s' is an invalid start time!" % request.form['start']}, status=400)
 
-    if 'end' not in request.args:
+    try:
+        end = utc8601_to_date(request.form['end'])
+    except KeyError:
         end = start + datetime.timedelta(hours=4)
-    else:
-        try:
-            end = utc8601_to_date(request.args['end'])
-        except ValueError:
-            return jsonify({'message': "'%s' is an invalid end time!" % request.args['end']}, status=400)
+    except ValueError:
+        return jsonify({'message': "'%s' is an invalid end time!" % request.form['end']}, status=400)
 
     if end < start:
         return jsonify({'message': "End time should be before start time!"}, status=400)
