@@ -3,7 +3,7 @@ from flask import Blueprint, g, request
 
 from . import rc
 from .auth import require_key
-from .util import jsonify, uuid, date_to_timestamp, timestamp_to_date
+from .util import jsonify, uuid, utc8601_to_date, timestamp_to_date
 
 api = Blueprint('api', __name__)
 
@@ -39,7 +39,7 @@ def create_commitment(eid):
         start = datetime.datetime.utcnow()
     else:
         try:
-            start = _parse_date(request.args['start'])
+            start = utc8601_to_date(request.args['start'])
         except ValueError:
             return jsonify({'message': "'%s' is an invalid start time!" % request.args['start']}, status=400)
 
@@ -47,7 +47,7 @@ def create_commitment(eid):
         end = start + datetime.timedelta(hours=4)
     else:
         try:
-            end = _parse_date(request.args['end'])
+            end = utc8601_to_date(request.args['end'])
         except ValueError:
             return jsonify({'message': "'%s' is an invalid end time!" % request.args['end']}, status=400)
 
@@ -80,14 +80,13 @@ def get_commitment(eid, cid):
     if not rc.zscore('event:%s:commitments' % eid, cid):
         return jsonify({'message': 'Commitment not found!'}, status=404)
 
+    start = rc.get('commitment:%s:start' % cid)
+    end = rc.get('commitment:%s:end' % cid)
+
     return jsonify({
         "id": cid,
-        "start": _parse_timestamp(rc.get('commitment:%s:start' % cid)).isoformat(),
-        "end": _parse_timestamp(rc.get('commitment:%s:end' % cid)).isoformat()
+        "start": timestamp_to_date(start).isoformat(),
+        "end": timestamp_to_date(end).isoformat()
     })
 
-def _parse_date(s):
-    return datetime.datetime.strptime(s, '%Y-%m-%dT%H:%M:%S')
 
-def _parse_timestamp(ts):
-    return datetime.datetime.utcfromtimestamp(int(ts))

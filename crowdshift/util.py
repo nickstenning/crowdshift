@@ -11,9 +11,9 @@ def jsonify(obj, *args, **kwargs):
 def uuid():
     return str(uuidlib.uuid4())
 
-def date_to_timestamp(date):
-    d = datetime.strptime(date, '%Y-%m-%dT%H:%M:%S')
-    return d.strftime('%s')
 
-def timestamp_to_date(timestamp):
-    return datetime.fromtimestamp(int(timestamp))
+def utc8601_to_date(date_str):
+    return datetime.strptime(date_str, '%Y-%m-%dT%H:%M:%S')
+
+def timestamp_to_date(timestamp_str):
+    return datetime.utcfromtimestamp(int(timestamp_str))
