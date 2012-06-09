@@ -93,12 +93,12 @@ def get_attendance(eid):
     try:
         start = utc8601_to_date(request.args['start'])
     except (KeyError, ValueError):
-        start = datetime.utcnow()
+        start = datetime.datetime.utcnow()
 
     try:
         end = utc8601_to_date(request.args['end'])
     except (KeyError, ValueError):
-        end = datetime.utcnow() + datetime.timedelta(days=1)
+        end = start + datetime.timedelta(days=1)
 
     try:
         resolution = int(request.args['resolution'])
