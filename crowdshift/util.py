@@ -6,7 +6,10 @@ from flask import request, Response
 
 def jsonify(obj, *args, **kwargs):
     res = json.dumps(obj, indent=None if request.is_xhr else 2)
-    return Response(res, mimetype='application/json', *args, **kwargs)
+    if 'callback' in request.args:
+        return Response('%s(%s);' % (request.args['callback'], res), mimetype='text/javascript', *args, **kwargs)
+    else:
+        return Response(res, mimetype='application/json', *args, **kwargs)
 
 def uuid():
     return str(uuidlib.uuid4())
