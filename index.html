@@ -1,0 +1,164 @@
+<!doctype html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge;chrome=1" >
+  <title></title>
+
+  <style>
+    body {
+      font-size: 62.5%;
+      line-height: 1.5em;
+      font-family: Helvetica Neue, Helvetica, sans-serif;
+      margin: 0;
+    }
+
+    p {
+      margin: 10px;
+      font-size: 14px;
+      font-size: 1.4rem;
+    }
+
+    .foreground.bar {
+      fill: steelblue;
+    }
+
+    .axis line, .axis path {
+      fill: none;
+      stroke: #000;
+      shape-rendering: crispEdges;
+    }
+
+    .axis line {
+      stroke: #aaa;
+    }
+
+    .axis line.minor {
+      stroke: #ccc;
+    }
+
+    .x.axis path {
+      stroke: none;
+    }
+
+    .brush .extent {
+      stroke: #fff;
+      fill: #000;
+      fill-opacity: .125;
+      shape-rendering: crispEdges;
+    }
+
+    .brush .resize path {
+      fill: #eee;
+      stroke: #666;
+    }
+  </style>
+</head>
+<body>
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js"></script>
+  <script src="https://raw.github.com/csnover/js-iso8601/master/iso8601.min.js"></script>
+  <script src="http://d3js.org/d3.v2.js"></script>
+  <script>
+    var url = 'http://localhost:5000/event/867cf935-7b70-428c-8f83-ccc1fb91f157/attendance?start=2012-05-09T00:00:00&callback=?';
+
+    jQuery.getJSON(url).done(function (data) {
+
+      var att = data.attendance;
+
+      att.forEach(function(d) {
+        d[0] = new Date(d[0]);
+      });
+
+      var dates = att.map(function (d) { return d[0]; });
+
+      var m = [80, 80, 80, 80],
+          w = 960 - m[1] - m[3],
+          h = 500 - m[0] - m[2];
+
+      var x = d3.time.scale()
+        .domain([dates[0], dates.slice(-1)[0]])
+        .range([0, w]);
+     
+      var y = d3.scale.linear()
+        .domain([0, d3.max(att, function (d) { return d[1]; })])
+        .range([h, 0]);
+
+      var xAxis = d3.svg.axis().scale(x).tickSize(-h);
+          yAxis = d3.svg.axis().scale(y).ticks(4).orient("right");
+
+      var svg = d3.select("body").append("svg:svg")
+        .attr("width", w + m[1] + m[3])
+        .attr("height", h + m[0] + m[2])
+      .append("svg:g")
+        .attr("transform", "translate(" + m[3] + "," + m[0] + ")");
+
+      svg.append("g").selectAll("rect")
+        .data(att)
+      .enter().append("rect")
+        .attr("class", "foreground bar")
+        .attr("x", function (d) { return x(new Date(d[0])) + 2; })
+        .attr("y", function (d) { return y(d[1]); })
+        .attr("width", w / att.length - 4)
+        .attr("height", function (d) { return h - y(d[1]); })
+
+      // Add the x-axis.
+      svg.append("svg:g")
+          .attr("class", "x axis")
+          .attr("transform", "translate(0," + h + ")")
+          .call(xAxis);
+
+      // Add the y-axis.
+      svg.append("svg:g")
+          .attr("class", "y axis")
+          .attr("transform", "translate(" + w + ",0)")
+          .call(yAxis);
+
+      // Resizing support
+      function resizePath(d) {
+        console.log(d);
+        var e = +(d == "e"),
+            x = e ? 1 : -1,
+            y = h / 3;
+        return "M" + (.5 * x) + "," + y
+            + "A6,6 0 0 " + e + " " + (6.5 * x) + "," + (y + 6)
+            + "V" + (2 * y - 6)
+            + "A6,6 0 0 " + e + " " + (.5 * x) + "," + (2 * y)
+            + "Z"
+            + "M" + (2.5 * x) + "," + (y + 8)
+            + "V" + (2 * y - 8)
+            + "M" + (4.5 * x) + "," + (y + 8)
+            + "V" + (2 * y - 8);
+      }
+
+      var brush = d3.svg.brush()
+        .x(x)
+        .on("brush", function () {
+          var g = d3.select(this.parentNode),
+              extent = brush.extent();
+
+          g.select(".brush")
+            .call(brush.extent(extent = extent.map(d3.time.hour.round)))
+        })
+        .on("brushend", function () {
+          var e = brush.extent();
+          jQuery('.commitment').text("From " + e[0] + " to " + e[1]);
+        });
+      
+
+      var gBrush = svg.append("svg:g")
+        .attr("class", "brush")
+        .call(brush)
+
+      gBrush.selectAll("rect")
+        .attr("height", h)
+      
+      gBrush.selectAll(".resize")
+        .append("path")
+          .attr("d", resizePath);
+    
+    });
+
+
+  </script>
+  <p class='commitment'></p>
+</body>
+</html>
